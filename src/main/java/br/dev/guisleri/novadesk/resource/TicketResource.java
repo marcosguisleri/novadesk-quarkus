@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Path("/tickets")
 public class TicketResource {
@@ -63,6 +64,21 @@ public class TicketResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Ticket> getTickets() {
         return tickets;
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getTicketById(@PathParam("id") long id) {
+        Optional<Ticket> ticket = tickets.stream()
+                .filter(t -> t.getId() == id)
+                .findFirst();
+
+        return ticket.isPresent()
+                ? Response.ok(ticket.get()).build()
+                : Response.status(Response.Status.NOT_FOUND)
+                .entity("Ticket " + " com id " + id + " não encontrado.")
+                .build();
     }
 
 }
