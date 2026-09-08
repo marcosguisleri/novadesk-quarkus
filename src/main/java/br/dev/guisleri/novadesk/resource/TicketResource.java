@@ -3,10 +3,9 @@ package br.dev.guisleri.novadesk.resource;
 import br.dev.guisleri.novadesk.model.Ticket;
 import br.dev.guisleri.novadesk.model.TicketPriority;
 import br.dev.guisleri.novadesk.model.TicketStatus;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +44,19 @@ public class TicketResource {
         tickets.add(ticket2);
         tickets.add(ticket3);
         tickets.add(ticket4);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createTicket(Ticket ticket) {
+        long newId = (tickets.size() + 1);
+
+        ticket.setId(newId);
+
+        tickets.add(ticket);
+
+        return Response.status(Response.Status.CREATED).entity(ticket).build();
     }
 
     @GET
