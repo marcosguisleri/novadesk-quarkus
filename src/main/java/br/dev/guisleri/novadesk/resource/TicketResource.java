@@ -86,6 +86,18 @@ public class TicketResource {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    @DELETE
+    @Path("/{id}")
+    public Response deleteTicket(@PathParam("id") long id) {
+        boolean removed = tickets.removeIf(t -> t.getId() == id);
+
+        if (removed) {
+            return Response.ok().build();
+        }
+
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Ticket> getTickets() {
