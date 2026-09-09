@@ -1,5 +1,7 @@
 package br.dev.guisleri.novadesk.service;
 
+import br.dev.guisleri.novadesk.dto.CreateTicketRequestDTO;
+import br.dev.guisleri.novadesk.dto.UpdateTicketRequestDTO;
 import br.dev.guisleri.novadesk.model.Ticket;
 import br.dev.guisleri.novadesk.model.TicketPriority;
 import br.dev.guisleri.novadesk.model.TicketStatus;
@@ -16,40 +18,19 @@ public class TicketService {
     private final List<Ticket> tickets = new ArrayList<>();
 
     public TicketService() {
-        Ticket ticket1 = new Ticket(
-                1L, "Ticket1", "Descrição Ticket 1",
-                "Marcos Guisleri", TicketStatus.OPEN,
-                TicketPriority.HIGH, LocalDateTime.now()
-        );
 
-        Ticket ticket2 = new Ticket(
-                2L, "Ticket 2", "Descrição Ticket 2",
-                "Marcos Guisleri", TicketStatus.OPEN,
-                TicketPriority.HIGH, LocalDateTime.now()
-        );
-
-        Ticket ticket3 = new Ticket(
-                3L, "Ticket 3", "Descrição Ticket 3",
-                "Marcos Guisleri", TicketStatus.OPEN,
-                TicketPriority.HIGH, LocalDateTime.now()
-        );
-
-        Ticket ticket4 = new Ticket(
-                4L, "Ticket 4", "Descrição Ticket 4",
-                "Marcos Guisleri", TicketStatus.OPEN,
-                TicketPriority.HIGH, LocalDateTime.now()
-        );
-
-        tickets.add(ticket1);
-        tickets.add(ticket2);
-        tickets.add(ticket3);
-        tickets.add(ticket4);
     }
 
-    public Ticket createTicket(Ticket ticket) {
-        long newId = (tickets.size() + 1);
+    public Ticket createTicket(CreateTicketRequestDTO requestDTO) {
+        Ticket ticket = new Ticket();
 
-        ticket.setId(newId);
+        ticket.setTitle(requestDTO.title());
+        ticket.setDescription(requestDTO.description());
+        ticket.setRequester(requestDTO.requester());
+        ticket.setPriority(requestDTO.priority());
+
+        ticket.setId(tickets.size() + 1);
+        ticket.setStatus(TicketStatus.OPEN);
         ticket.setCreatedAt(LocalDateTime.now());
 
         tickets.add(ticket);
@@ -57,17 +38,16 @@ public class TicketService {
         return ticket;
     }
 
-    public Optional<Ticket> updateTicket(long id, Ticket ticket) {
+    public Optional<Ticket> updateTicket(long id, UpdateTicketRequestDTO requestDTO) {
         Optional<Ticket> ticketToUpdate = getTicketById(id);
 
         if (ticketToUpdate.isPresent()) {
             Ticket existingTicket = ticketToUpdate.get();
 
-            existingTicket.setTitle(ticket.getTitle());
-            existingTicket.setDescription(ticket.getDescription());
-            existingTicket.setRequester(ticket.getRequester());
-            existingTicket.setStatus(ticket.getStatus());
-            existingTicket.setPriority(ticket.getPriority());
+            existingTicket.setTitle(requestDTO.title());
+            existingTicket.setDescription(requestDTO.description());
+            existingTicket.setRequester(requestDTO.requester());
+            existingTicket.setStatus(requestDTO.status());
 
             return Optional.of(existingTicket);
         }

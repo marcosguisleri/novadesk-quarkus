@@ -1,5 +1,8 @@
 package br.dev.guisleri.novadesk.resource;
 
+import br.dev.guisleri.novadesk.dto.CreateTicketRequestDTO;
+import br.dev.guisleri.novadesk.dto.TicketResponseDTO;
+import br.dev.guisleri.novadesk.dto.UpdateTicketRequestDTO;
 import br.dev.guisleri.novadesk.model.Ticket;
 import br.dev.guisleri.novadesk.service.TicketService;
 import jakarta.inject.Inject;
@@ -19,11 +22,11 @@ public class TicketResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createTicket(Ticket ticket) {
-        Ticket createdTicket = ticketService.createTicket(ticket);
+    public Response createTicket(CreateTicketRequestDTO requestDTO) {
+        Ticket createdTicket = ticketService.createTicket(requestDTO);
 
         return Response.status(Response.Status.CREATED)
-                .entity(createdTicket)
+                .entity(convertToResponseDTO(createdTicket))
                 .build();
     }
 
@@ -31,11 +34,15 @@ public class TicketResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateTicket(@PathParam("id") long id, Ticket ticket) {
-        Optional<Ticket> updatedTicket = ticketService.updateTicket(id, ticket);
+    public Response updateTicket(@PathParam("id") long id,
+                                 UpdateTicketRequestDTO requestDTO) {
+
+        Optional<Ticket> updatedTicket = ticketService.updateTicket(id, requestDTO);
 
         if (updatedTicket.isPresent()) {
-            return Response.ok(updatedTicket.get()).build();
+            return Response.ok(
+                    convertToResponseDTO(updatedTicket.get())
+            ).build();
         }
 
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -55,8 +62,11 @@ public class TicketResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Ticket> getTickets() {
-        return ticketService.getAllTickets();
+    public List<TicketResponseDTO> getTickets() {
+        return ticketService.getAllTickets()
+                .stream()
+                .map(this::convertToResponseDTO)
+                .toList();
     }
 
     @GET
@@ -65,11 +75,23 @@ public class TicketResource {
     public Response getTicketById(@PathParam("id") long id) {
         Optional<Ticket> ticket = ticketService.getTicketById(id);
 
-        return ticket.isPresent()
-                ? Response.ok(ticket.get()).build()
-                : Response.status(Response.Status.NOT_FOUND)
-                .entity("Ticket com id " + id + " não encontrado.")
-                .build();
+        if (ticket.isPresent()) {
+            return Response.ok(
+                    convertToResponseDTO(ticket.get())
+            ).build();
+        }
+
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    private TicketResponseDTO convertToResponseDTO(Ticket ticket) {
+        return new TicketResponseDTO(ticket.getId(),
+                ticket.getTitle(),
+                ticket.getDescription(),
+                ticket.getRequester(),
+                ticket.getStatus(),
+                ticket.getPriority(),
+                ticket.getCreatedAt());
     }
 
 }
