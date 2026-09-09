@@ -6,6 +6,7 @@ import br.dev.guisleri.novadesk.dto.UpdateTicketRequestDTO;
 import br.dev.guisleri.novadesk.model.Ticket;
 import br.dev.guisleri.novadesk.service.TicketService;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -22,7 +23,7 @@ public class TicketResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createTicket(CreateTicketRequestDTO requestDTO) {
+    public Response createTicket(@Valid CreateTicketRequestDTO requestDTO) {
         Ticket createdTicket = ticketService.createTicket(requestDTO);
 
         return Response.status(Response.Status.CREATED)
@@ -35,7 +36,7 @@ public class TicketResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateTicket(@PathParam("id") long id,
-                                 UpdateTicketRequestDTO requestDTO) {
+                                 @Valid UpdateTicketRequestDTO requestDTO) {
 
         Optional<Ticket> updatedTicket = ticketService.updateTicket(id, requestDTO);
 
