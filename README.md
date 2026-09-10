@@ -1,66 +1,137 @@
-# novadesk-quarkus
+# 🎫 NovaDesk API (Quarkus)
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+API REST para gerenciamento de chamados (tickets) de um help desk interno, desenvolvida em Java 25 com **Quarkus**. É uma reescrita do [NovaDesk API](https://github.com/marcosguisleri/novadesk-api) original (feito em Spring Boot), usando a stack Quarkus com Panache e Jakarta REST.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## 📋 Sobre o projeto
 
-## Running the application in dev mode
+O NovaDesk API permite criar, consultar, atualizar e remover tickets de suporte, com controle de **status** (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `CANCELED`) e **prioridade** (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). Todo ticket criado recebe automaticamente o status inicial `OPEN` e a data/hora de criação.
 
-You can run your application in dev mode that enables live coding using:
+## 🚀 Tecnologias
 
-```shell script
+- **Java 25**
+- **Quarkus 3.39.2**
+- **Jakarta REST (RESTEasy Reactive)** — endpoints REST
+- **Hibernate ORM com Panache** — persistência
+- **Hibernate Validator** — validação de dados
+- **PostgreSQL** (produção) / **H2** (testes)
+- **SmallRye OpenAPI + Swagger UI** — documentação da API
+- **JUnit + REST Assured** — testes automatizados
+- **Docker / Docker Compose**
+- **Maven** (com Maven Wrapper)
+
+## ✨ Funcionalidades
+
+- Criação de tickets com validação dos dados de entrada
+- Listagem de tickets, com filtros opcionais por `status` e/ou `priority`
+- Busca de ticket por ID
+- Atualização de título, descrição, solicitante e status de um ticket existente
+- Remoção de ticket
+- Tratamento de erro dedicado para ticket não encontrado (`404`, via `ExceptionMapper`)
+- Documentação interativa via Swagger UI
+
+## 📌 Endpoints
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/tickets` | Cria um novo ticket |
+| `GET` | `/tickets` | Lista todos os tickets (aceita `?status=` e/ou `?priority=`) |
+| `GET` | `/tickets/{id}` | Busca um ticket pelo ID |
+| `PUT` | `/tickets/{id}` | Atualiza um ticket existente |
+| `DELETE` | `/tickets/{id}` | Remove um ticket |
+
+### Modelo de Ticket
+
+```json
+{
+  "id": 1,
+  "title": "Impressora não funciona",
+  "description": "A impressora do setor financeiro não está imprimindo.",
+  "requester": "joao.silva",
+  "status": "OPEN",
+  "priority": "HIGH",
+  "createdAt": "2026-09-07T14:30:00"
+}
+```
+
+## ⚙️ Como executar
+
+### Pré-requisitos
+
+- Java 25 (apenas se for rodar sem Docker)
+- Docker e Docker Compose
+
+### Rodando com Docker Compose (recomendado)
+
+1. Crie um arquivo `.env` na raiz do projeto com as variáveis:
+
+   ```env
+   POSTGRES_DB=novadesk
+   POSTGRES_USER=novadesk
+   POSTGRES_PASSWORD=sua_senha
+   ```
+
+2. Suba os containers:
+
+   ```bash
+   docker compose up --build
+   ```
+
+A API sobe em `http://localhost:8080` e o PostgreSQL em `localhost:5432`.
+
+### Rodando em modo de desenvolvimento (dev mode)
+
+Com um PostgreSQL disponível e as variáveis `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` exportadas no ambiente:
+
+```bash
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+O modo dev habilita live coding e disponibiliza a Dev UI em `http://localhost:8080/q/dev/`.
 
-## Packaging and running the application
+### Gerando o pacote executável
 
-The application can be packaged using:
-
-```shell script
+```bash
 ./mvnw package
+java -jar target/quarkus-app/quarkus-run.jar
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+### Executável nativo (GraalVM)
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
+```bash
 ./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
+# ou, sem GraalVM instalado, buildando em container:
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/novadesk-quarkus-1.0.0-SNAPSHOT-runner`
+## 📖 Documentação da API
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+Com a aplicação em execução, a documentação Swagger UI fica disponível em:
 
-## Related Guides
+```
+http://localhost:8080/q/swagger-ui
+```
 
-- REST ([guide](https://quarkus.io/guides/rest)): Build RESTful web services and APIs using Jakarta REST (formerly JAX-RS)
+## 🧪 Testes
 
-## Provided Code
+O projeto conta com testes de serviço e de resource (REST Assured). Para rodá-los:
 
-### REST
+```bash
+./mvnw test
+```
 
-Easily start your REST Web Services
+## 📁 Estrutura do projeto
 
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+```
+src/main/java/br/dev/guisleri/novadesk
+├── dto/              # DTOs de request/response
+├── exception/        # Exceções customizadas
+│   └── mapper/       # ExceptionMapper (JAX-RS) para tratamento de erros
+├── model/            # Entidade Ticket e enums (status, priority)
+├── repository/       # Repositório Panache
+├── resource/         # Endpoints REST (JAX-RS)
+└── service/          # Regras de negócio
+```
+
+## 👤 Autor
+
+Desenvolvido por [Marcos Guisleri](https://github.com/marcosguisleri).
