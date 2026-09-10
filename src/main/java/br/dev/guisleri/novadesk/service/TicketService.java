@@ -2,25 +2,27 @@ package br.dev.guisleri.novadesk.service;
 
 import br.dev.guisleri.novadesk.dto.CreateTicketRequestDTO;
 import br.dev.guisleri.novadesk.dto.UpdateTicketRequestDTO;
+import br.dev.guisleri.novadesk.exception.TicketNotFoundException;
 import br.dev.guisleri.novadesk.model.Ticket;
 import br.dev.guisleri.novadesk.model.TicketPriority;
 import br.dev.guisleri.novadesk.model.TicketStatus;
+import br.dev.guisleri.novadesk.repository.TicketRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @ApplicationScoped
 public class TicketService {
 
-    private final List<Ticket> tickets = new ArrayList<>();
+    private final TicketRepository ticketRepository;
 
-    public TicketService() {
-
+    public TicketService(TicketRepository ticketRepository) {
+        this.ticketRepository = ticketRepository;
     }
 
+    @Transactional
     public Ticket createTicket(CreateTicketRequestDTO requestDTO) {
         Ticket ticket = new Ticket();
 
@@ -29,44 +31,54 @@ public class TicketService {
         ticket.setRequester(requestDTO.requester());
         ticket.setPriority(requestDTO.priority());
 
-        ticket.setId(tickets.size() + 1);
         ticket.setStatus(TicketStatus.OPEN);
         ticket.setCreatedAt(LocalDateTime.now());
 
-        tickets.add(ticket);
+        ticketRepository.persist(ticket);
 
         return ticket;
     }
 
-    public Optional<Ticket> updateTicket(long id, UpdateTicketRequestDTO requestDTO) {
-        Optional<Ticket> ticketToUpdate = getTicketById(id);
+    @Transactional
+    public Ticket updateTicket(long id, UpdateTicketRequestDTO requestDTO) {
+        Ticket existingTicket = getTicketById(id);
 
-        if (ticketToUpdate.isPresent()) {
-            Ticket existingTicket = ticketToUpdate.get();
+        existingTicket.setTitle(requestDTO.title());
+        existingTicket.setDescription(requestDTO.description());
+        existingTicket.setRequester(requestDTO.requester());
+        existingTicket.setStatus(requestDTO.status());
 
-            existingTicket.setTitle(requestDTO.title());
-            existingTicket.setDescription(requestDTO.description());
-            existingTicket.setRequester(requestDTO.requester());
-            existingTicket.setStatus(requestDTO.status());
+        return existingTicket;
+    }
 
-            return Optional.of(existingTicket);
+    @Transactional
+    public void deleteTicketById(long id) {
+        Ticket ticketToDelete = getTicketById(id);
+
+        ticketRepository.delete(ticketToDelete);
+    }
+
+    public List<Ticket> getTickets(TicketStatus status, TicketPriority priority) {
+
+        if (status != null && priority != null) {
+            return ticketRepository.findByStatusAndPriority(status, priority);
         }
 
-        return Optional.empty();
+        if (status != null) {
+            return ticketRepository.findByStatus(status);
+        }
+
+        if (priority != null) {
+            return ticketRepository.findByPriority(priority);
+        }
+
+        return ticketRepository.listAll();
+
     }
 
-    public boolean deleteTicketById(long id) {
-        return tickets.removeIf(t -> t.getId() == id);
-    }
-
-    public List<Ticket> getAllTickets() {
-        return tickets;
-    }
-
-    public Optional<Ticket> getTicketById(long id) {
-        return tickets.stream()
-                .filter(ticket -> ticket.getId() == id)
-                .findFirst();
+    public Ticket getTicketById(long id) {
+        return ticketRepository.findByIdOptional(id)
+                .orElseThrow(() -> new TicketNotFoundException(id));
     }
 
 }
